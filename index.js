@@ -53,7 +53,7 @@ async function run() {
       res.send({ token });
     });
 
-    //admin create
+    //admin get for any admin work
     app.get("/users/admin/:email", verifyToken, async (req, res) => {
       const email = req.params.email;
       //  console.log("email form route", email);
@@ -68,6 +68,23 @@ async function run() {
         admin = user?.userType === "admin";
       }
       res.send({ admin });
+    });
+
+    //delivery man get for any work of delivery man
+    app.get("/users/delivery-man/:email", verifyToken, async (req, res) => {
+      const email = req.params.email;
+      //  console.log("email form route", email);
+      //  console.log("decoded form route", req.decoded?.email);
+      if (email !== req.decoded?.email) {
+        return res.status(403).send({ message: "Forbidden access" });
+      }
+      const query = { email: email };
+      const user = await userCollection.findOne(query);
+      let deliveryMan = false;
+      if (user) {
+        deliveryMan = user?.userType === "deliveryMan";
+      }
+      res.send({ deliveryMan });
     });
 
     //user created and stored on mongodb
