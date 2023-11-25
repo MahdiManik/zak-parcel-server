@@ -24,7 +24,7 @@ const client = new MongoClient(uri, {
 
 //middlewares for token verify
 const verifyToken = (req, res, next) => {
-    console.log("inside the verifyToken", req.headers.authorization);
+  console.log("inside the verifyToken", req.headers.authorization);
   if (!req.headers.authorization) {
     return res.status(401).send({ message: "unauthorized access" });
   }
@@ -51,6 +51,23 @@ async function run() {
         expiresIn: "1h",
       });
       res.send({ token });
+    });
+
+    //admin create
+    app.get("/users/admin/:email", verifyToken, async (req, res) => {
+      const email = req.params.email;
+      //  console.log("email form route", email);
+      //  console.log("decoded form route", req.decoded?.email);
+      if (email !== req.decoded?.email) {
+        return res.status(403).send({ message: "Forbidden access" });
+      }
+      const query = { email: email };
+      const user = await userCollection.findOne(query);
+      let admin = false;
+      if (user) {
+        admin = user?.userType === "admin";
+      }
+      res.send({ admin });
     });
 
     //user created and stored on mongodb
