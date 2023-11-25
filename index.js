@@ -21,12 +21,25 @@ const client = new MongoClient(uri, {
     deprecationErrors: true,
   },
 });
+
+
+
+
 async function run() {
   try {
     //await client.connect();
-    //await client.db("admin").command({ ping: 1 });
 
     const userCollection = client.db("zakParcel").collection("users");
+
+	   //jwt token set on local storage
+	   app.post("/jwt", async (req, res) => {
+		const user = req.body;
+		const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, {
+		  expiresIn: "1h",
+		});
+		res.send({ token });
+	  });
+  
 
     //user created and stored on mongodb
     app.post("/users", async (req, res) => {
@@ -40,6 +53,7 @@ async function run() {
       res.send(result);
     });
 
+    //await client.db("admin").command({ ping: 1 });
     console.log(
       "Pinged your deployment. You successfully connected to MongoDB!"
     );
