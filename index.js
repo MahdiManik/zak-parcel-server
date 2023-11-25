@@ -22,8 +22,21 @@ const client = new MongoClient(uri, {
   },
 });
 
-
-
+//middlewares for token verify
+const verifyToken = (req, res, next) => {
+    console.log("inside the verifyToken", req.headers.authorization);
+  if (!req.headers.authorization) {
+    return res.status(401).send({ message: "unauthorized access" });
+  }
+  const token = req.headers.authorization.split(" ")[1];
+  jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, decoded) => {
+    if (err) {
+      res.status(401).send({ message: "unauthorized access" });
+    }
+    req.decoded = decoded;
+    next();
+  });
+};
 
 async function run() {
   try {
@@ -31,15 +44,14 @@ async function run() {
 
     const userCollection = client.db("zakParcel").collection("users");
 
-	   //jwt token set on local storage
-	   app.post("/jwt", async (req, res) => {
-		const user = req.body;
-		const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, {
-		  expiresIn: "1h",
-		});
-		res.send({ token });
-	  });
-  
+    //jwt token set on local storage
+    app.post("/jwt", async (req, res) => {
+      const user = req.body;
+      const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, {
+        expiresIn: "1h",
+      });
+      res.send({ token });
+    });
 
     //user created and stored on mongodb
     app.post("/users", async (req, res) => {
