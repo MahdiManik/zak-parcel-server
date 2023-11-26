@@ -24,7 +24,7 @@ const client = new MongoClient(uri, {
 
 //middlewares for token verify
 const verifyToken = (req, res, next) => {
-  console.log("inside the verifyToken", req.headers.authorization);
+  //  console.log("inside the verifyToken", req.headers.authorization);
   if (!req.headers.authorization) {
     return res.status(401).send({ message: "unauthorized access" });
   }
@@ -43,21 +43,37 @@ async function run() {
     //await client.connect();
 
     const userCollection = client.db("zakParcel").collection("users");
+    const bookingCollection = client.db("zakParcel").collection("bookings");
 
     //jwt token set on local storage
     app.post("/jwt", async (req, res) => {
       const user = req.body;
+      console.log(process.env.ACCESS_TOKEN_SECRET);
       const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, {
-        expiresIn: "1h",
+        expiresIn: "1d",
       });
       res.send({ token });
+    });
+
+    app.get("/bookings/:email", verifyToken, async (req, res) => {
+      const query = { email: req.params?.email };
+      if (req.params?.email !== req.decoded?.email) {
+        res.status(403).send({ message: "Forbidden access" });
+      }
+      const result = await bookingCollection.find(query).toArray();
+      res.send(result);
+    });
+
+    // create a booking data
+    app.post("/bookings", async (req, res) => {
+      const query = req.body;
+      const result = await bookingCollection.insertOne(query);
+      res.send(result);
     });
 
     //admin get for any admin work
     app.get("/users/admin/:email", verifyToken, async (req, res) => {
       const email = req.params.email;
-      //  console.log("email form route", email);
-      //  console.log("decoded form route", req.decoded?.email);
       if (email !== req.decoded?.email) {
         return res.status(403).send({ message: "Forbidden access" });
       }
@@ -66,6 +82,7 @@ async function run() {
       let admin = false;
       if (user) {
         admin = user?.userType === "admin";
+        //console.log(admin);
       }
       res.send({ admin });
     });
@@ -83,6 +100,7 @@ async function run() {
       let deliveryMan = false;
       if (user) {
         deliveryMan = user?.userType === "deliveryMan";
+        console.log(user?.userType);
       }
       res.send({ deliveryMan });
     });
